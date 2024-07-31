@@ -1,0 +1,161 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h2>Watch this video</h2>
+            <div class="video-wrapper">
+                <div class="embed-responsive embed-responsive-16by9" id="video-container"></div>
+                <div class="controls">
+                    <button id="playPause">Play/Pause</button>
+                    <button id="muteUnmute">Mute/Unmute</button>
+                    <span id="currentTime">0:00</span>
+                    <span>/</span>
+                    <span id="totalTime">0:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .video-wrapper {
+        position: relative;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+        .video-wrapper .embed-responsive {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+    .controls {
+        text-align: center;
+        margin-top: 10px;
+    }
+
+        .controls button {
+            margin: 0 10px;
+        }
+
+        .controls span {
+            font-size: 16px;
+        }
+</style>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+    var player;
+    var videoId = 'fEnwMyHejtQ'; // Video ID
+    var localStorageKey = 'youtube-' + videoId + '-time';
+    var playPauseButton = document.getElementById('playPause');
+    var muteUnmuteButton = document.getElementById('muteUnmute');
+    var currentTimeDisplay = document.getElementById('currentTime');
+    var totalTimeDisplay = document.getElementById('totalTime');
+    var analyticsInterval;
+
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('video-container', {
+            videoId: videoId,
+            playerVars: {
+                'controls': 0,
+                'modestbranding': 1,
+                'rel': 0,
+                'showinfo': 0,
+                'iv_load_policy': 3,
+                'disablekb': 1
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+            }
+        });
+    }
+
+    function onPlayerReady(event) {
+        var lastTime = localStorage.getItem(localStorageKey);
+        if (lastTime) {
+            player.seekTo(parseFloat(lastTime));
+        }
+        player.playVideo();
+        updateTotalTime();
+        setInterval(updateCurrentTime, 1000);
+        analyticsInterval = setInterval(sendAnalyticsData, 60000); // Send data every minute
+    }
+
+    function onPlayerStateChange(event) {
+        if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+            var currentTime = player.getCurrentTime();
+            localStorage.setItem(localStorageKey, currentTime);
+            clearInterval(analyticsInterval); // Stop tracking when paused or ended
+        }
+        if (event.data == YT.PlayerState.PLAYING) {
+            analyticsInterval = setInterval(sendAnalyticsData, 60000); // Resume tracking when playing
+        }
+    }
+
+    function updateCurrentTime() {
+        var currentTime = player.getCurrentTime();
+        currentTimeDisplay.textContent = formatTime(currentTime);
+    }
+
+    function updateTotalTime() {
+        var totalTime = player.getDuration();
+        totalTimeDisplay.textContent = formatTime(totalTime);
+    }
+
+    function formatTime(seconds) {
+        var minutes = Math.floor(seconds / 60);
+        var seconds = Math.floor(seconds % 60);
+        return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+    }
+
+    playPauseButton.addEventListener('click', function() {
+        var state = player.getPlayerState();
+        if (state == YT.PlayerState.PLAYING) {
+            player.pauseVideo();
+        } else {
+            player.playVideo();
+        }
+    });
+
+    muteUnmuteButton.addEventListener('click', function() {
+        if (player.isMuted()) {
+            player.unMute();
+        } else {
+            player.mute();
+        }
+    });
+
+    document.getElementById('video-container').addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    function sendAnalyticsData() {
+        var currentTime = player.getCurrentTime();
+        var data = {
+            videoId: videoId,
+            watchedTime: currentTime
+        };
+        fetch('@Url.Action("TrackAnalytics", "Home")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (!response.ok) {
+                console.error('Error sending analytics data:', response.statusText);
+            }
+        }).catch(error => {
+            console.error('Error sending analytics data:', error);
+        });
+    }
+</script>
