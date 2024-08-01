@@ -37,29 +37,29 @@ Entity Framework
   If changes are made to the database schema, update the Entity Data Model in the project.
 
 6.Run the Application:
-  Open the solution in Visual Studio.
+   Open the solution in Visual Studio.
   
-  Build and run the project using IIS Express.
+   Build and run the project using IIS Express.
   
 ## Usage
 
-Access the application in your browser.
+  1.Access the application in your browser.
 
-Watch the embedded video.
+  2.Watch the embedded video.
 
-Play, pause, and mute/unmute the video using the provided controls.
+  3.Play, pause, and mute/unmute the video using the provided controls.
 
-The application will automatically save and resume from the last watched point.
+  4.The application will automatically save and resume from the last watched point.
 
 ## Code Structure
 
-Controllers: Handles the main logic, including tracking video analytics.
+  1.Controllers: Handles the main logic, including tracking video analytics.
 
-Models: Represents the data structure, including analytics data.
+  2.Models: Represents the data structure, including analytics data.
 
-Views: Contains the HTML, CSS, and JavaScript for the front-end.
+  3.Views: Contains the HTML, CSS, and JavaScript for the front-end.
 
-Scripts: Contains custom JavaScript, including the YouTube API integration.
+  4.Scripts: Contains custom JavaScript, including the YouTube API integration.
 
 ## Database Schema
   Analytics Table:
